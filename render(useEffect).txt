@@ -1,0 +1,141 @@
+import React, { useEffect, useState } from 'react';
+import { View, TextInput, Button, StyleSheet, Alert, FlatList, Text } from 'react-native';
+
+const App = () => {
+  const [items, setItems] = useState([]);
+  const [name, setName] = useState('');
+  const [avatar, setAvatar] = useState('');
+  const [editId, setEditId] = useState(null);
+
+  useEffect(() => {
+    fetchItems();
+  }, []);
+
+  const fetchItems = async () => {
+    try {
+      const response = await fetch('https://670b4051ac6860a6c2cb8d98.mockapi.io/xx/okokok');
+      const data = await response.json();
+      setItems(data);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to fetch items');
+    }
+  };
+
+  const addItem = async () => {
+    if (name && avatar) {
+      try {
+        const response = await fetch('https://670b4051ac6860a6c2cb8d98.mockapi.io/xx/okokok', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ name, avatar }),
+        });
+        const newItem = await response.json();
+        setItems([...items, newItem]);
+        Alert.alert('Success', `Item added: ${newItem.name}`);
+        setName('');
+        setAvatar('');
+      } catch (error) {
+        Alert.alert('Error', 'Failed to add item');
+      }
+    }
+  };
+
+  const editItem = async () => {
+    if (editId && (name || avatar)) {
+      try {
+        const response = await fetch(`https://670b4051ac6860a6c2cb8d98.mockapi.io/xx/okokok/${editId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ name, avatar }),
+        });
+        const updatedItem = await response.json();
+        const updatedItems = items.map(item => item.id === editId ? updatedItem : item);
+        setItems(updatedItems);
+        Alert.alert('Success', `Item updated: ${updatedItem.name}`);
+        setName('');
+        setAvatar('');
+        setEditId(null);
+      } catch (error) {
+        Alert.alert('Error', 'Failed to update item');
+      }
+    }
+  };
+
+  const deleteItem = async () => {
+    if (editId) {
+      try {
+        await fetch(`https://670b4051ac6860a6c2cb8d98.mockapi.io/xx/okokok/${editId}`, {
+          method: 'DELETE',
+        });
+        const updatedItems = items.filter(item => item.id !== editId);
+        setItems(updatedItems);
+        Alert.alert('Success', `Item with ID ${editId} deleted`);
+        setName('');
+        setAvatar('');
+        setEditId(null);
+      } catch (error) {
+        Alert.alert('Error', 'Failed to delete item');
+      }
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <TextInput
+        style={styles.input}
+        value={name}
+        onChangeText={setName}
+        placeholder="Enter name"
+      />
+      <TextInput
+        style={styles.input}
+        value={avatar}
+        onChangeText={setAvatar}
+        placeholder="Enter avatar URL"
+      />
+      <TextInput
+        style={styles.input}
+        value={editId}
+        onChangeText={setEditId}
+        placeholder="Enter ID to edit/delete"
+        keyboardType="numeric"
+      />
+      <Button title="ADD" onPress={addItem} />
+      <Button title="EDIT" onPress={editItem} />
+      <Button title="DELETE" onPress={deleteItem} />
+
+      <FlatList
+        data={items}
+        keyExtractor={item => item.id.toString()}
+        renderItem={({ item }) => (
+          <View style={styles.item}>
+            <Text>{item.name}</Text>
+          </View>
+        )}
+      />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+  },
+  input: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    marginBottom: 10,
+    paddingHorizontal: 10,
+  },
+  item: {
+    marginVertical: 5,
+  },
+});
+
+export default App;
